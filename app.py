@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 import pandas as pd
 import pickle as pkl # or pickle, depending on how your model is saved
 import time
+import requests
 
 # Initialize the Flask app
 app = Flask(__name__)
@@ -60,3 +61,5 @@ def predict():
     except Exception as e:
         return jsonify({"error": f"Unexpected error: {str(e)}"}), 500 
 
+if __name__ == '__main__':
+    app.run(debug=False)
