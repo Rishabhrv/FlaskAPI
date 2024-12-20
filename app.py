@@ -3,6 +3,7 @@ from sklearn.preprocessing import StandardScaler
 import pandas as pd
 import pickle as pkl # or pickle, depending on how your model is saved
 import time
+import xgboost
 
 # Initialize the Flask app
 app = Flask(__name__)
