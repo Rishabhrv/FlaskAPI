@@ -52,7 +52,7 @@ def predict():
             row_data = row.values.reshape(1, -1)
             prediction = model.predict(row_data)[0]
             predictions.append({"prediction": int(prediction)})  # Convert to int
-            time.sleep(0.1)  # Simulating real-time prediction delay
+            #time.sleep(0.1)  # Simulating real-time prediction delay
 
         # Calculate processing time
         time_taken = time.time() - request.start_time
