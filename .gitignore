@@ -183,3 +183,5 @@ pyvenv.cfg
 pip-selfcheck.json
 
 # End of https://www.toptal.com/developers/gitignore/api/flask,venv
+Heart_Disease_XG (1).ipynb
+Heart_Diseases_Classification.ipynb

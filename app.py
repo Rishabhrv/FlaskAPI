@@ -1,14 +1,14 @@
 from flask import Flask, request, jsonify
+from sklearn.preprocessing import StandardScaler
 import pandas as pd
 import pickle as pkl # or pickle, depending on how your model is saved
 import time
-import requests
 
 # Initialize the Flask app
 app = Flask(__name__)
 
 # Load the trained model
-with open('model.pkl', 'rb') as file:
+with open('xgboost.pkl', 'rb') as file:
     model = pkl.load(file)  # Replace with your model's path
 
 # Middleware to set start_time
@@ -41,14 +41,17 @@ def predict():
 
         # Prepare data for prediction
         X = data.drop('target', axis=1)
+        scaler = StandardScaler()
+        X_scaled = scaler.fit_transform(X)
+        X_scaled = pd.DataFrame(X_scaled)
 
         # Simulate continuous prediction
         predictions = []
-        for index, row in X.iterrows():
+        for index, row in X_scaled.iterrows():
             row_data = row.values.reshape(1, -1)
             prediction = model.predict(row_data)[0]
             predictions.append({"prediction": int(prediction)})  # Convert to int
-            time.sleep(0.02)  # Simulating real-time prediction delay
+            time.sleep(0.03)  # Simulating real-time prediction delay
 
         # Calculate processing time
         time_taken = time.time() - request.start_time
