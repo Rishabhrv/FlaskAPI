@@ -1,16 +1,21 @@
 from flask import Flask, request, jsonify
 from sklearn.preprocessing import StandardScaler
 import pandas as pd
-import pickle as pkl # or pickle, depending on how your model is saved
+import pickle as pkl
 import time
-import xgboost
+from io import StringIO
+from cryptography.fernet import Fernet  
 
 # Initialize the Flask app
 app = Flask(__name__)
 
 # Load the trained model
 with open('xgboost.pkl', 'rb') as file:
-    model = pkl.load(file)  # Replace with your model's path
+    model = pkl.load(file)
+
+# Load the encryption key (generate this once and keep it secure)
+key = b'sU51iummF3ERq9MeIXa9C14ma1guxWFH12IyPTmZXTs='  
+cipher = Fernet(key)
 
 # Middleware to set start_time
 @app.before_request
@@ -26,19 +31,17 @@ def predict():
 
         file = request.files['file']
 
-        # Check if the file is a CSV
-        if not file or not file.filename.endswith('.csv'):
-            return jsonify({"error": "Please upload a valid CSV file"}), 400
+        # Check if the file is uploaded and is encrypted
+        if not file or not file.filename.endswith('.enc'):
+            return jsonify({"error": "Please upload a valid encrypted file (*.enc)"}), 400
 
-        # Read the CSV file into a DataFrame
+        # Read and decrypt the file
         try:
-            data = pd.read_csv(file)
+            encrypted_data = file.read()
+            decrypted_data = cipher.decrypt(encrypted_data).decode('utf-8')
+            data = pd.read_csv(StringIO(decrypted_data))
         except Exception as e:
-            return jsonify({"error": f"Failed to read CSV file: {str(e)}"}), 400
-
-        # Ensure the 'target' column is present
-        if 'target' not in data.columns:
-            return jsonify({"error": "The uploaded file must include a 'target' column"}), 400
+            return jsonify({"error": f"Failed to decrypt or read the file: {str(e)}"}), 400
 
         # Prepare data for prediction
         X = data.drop('target', axis=1)
@@ -51,8 +54,7 @@ def predict():
         for index, row in X_scaled.iterrows():
             row_data = row.values.reshape(1, -1)
             prediction = model.predict(row_data)[0]
-            predictions.append({"prediction": int(prediction)})  # Convert to int
-            #time.sleep(0.1)  # Simulating real-time prediction delay
+            predictions.append({"prediction": int(prediction)})
 
         # Calculate processing time
         time_taken = time.time() - request.start_time
@@ -63,7 +65,7 @@ def predict():
         })
 
     except Exception as e:
-        return jsonify({"error": f"Unexpected error: {str(e)}"}), 500 
+        return jsonify({"error": f"Unexpected error: {str(e)}"}), 500
 
 if __name__ == '__main__':
-    app.run(debug=False)
+    app.run(ssl_context=('cert.pem', 'key.pem'), debug=False)
