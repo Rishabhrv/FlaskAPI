@@ -55,7 +55,7 @@ def predict():
         for index, row in X_scaled.iterrows():
             row_data = row.values.reshape(1, -1)
             prediction = model.predict(row_data)[0]
-            predictions.append({"prediction": int(prediction)})
+            predictions.append(int(prediction))
 
         # Calculate processing time
         time_taken = time.time() - request.start_time
