@@ -5,6 +5,7 @@ import pickle as pkl
 import time
 from io import StringIO
 from cryptography.fernet import Fernet  
+import xgboost
 
 # Initialize the Flask app
 app = Flask(__name__)
