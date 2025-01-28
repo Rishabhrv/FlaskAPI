@@ -13,6 +13,7 @@ import requests
 from email.mime.text import MIMEText
 import smtplib
 import psutil 
+import os
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -25,6 +26,7 @@ CLOUD_API_URL = 'https://flaskapi-itlt.onrender.com/predict'
 quantized_model_path = 'quantized_random_forest.onnx'
 onnx_session = InferenceSession(quantized_model_path)
 scaler = joblib.load('scaler.pkl')
+current_process = psutil.Process(os.getpid())
 
 # Load the encryption key (generate this once and keep it secure)
 key = b'sU51iummF3ERq9MeIXa9C14ma1guxWFH12IyPTmZXTs='  
@@ -50,10 +52,9 @@ def send_email_notification(patient_id, doctor_email):
 
 @app.route('/predict', methods=['POST'])
 def predict():
-    computation_start_time = time.time()
     try:
         # Measure initial memory and CPU usage
-        initial_memory = psutil.virtual_memory().used / (1024 ** 2)  # In MB
+        initial_memory = current_process.memory_info().rss / (1024 ** 2)  # RSS in MB
         initial_cpu = psutil.cpu_percent(interval=None)
 
         if 'file' not in request.files:
@@ -109,20 +110,20 @@ def predict():
             if score >= 0.95:
                 critical_cases.append(idx)
 
-        if critical_cases:
-            send_email_notification(patient_id='12345', doctor_email='doctor@example.com')
+        # if critical_cases:
+        #     send_email_notification(patient_id='12345', doctor_email='doctor@example.com')
 
         # Measure final memory and CPU usage
-        final_memory = psutil.virtual_memory().used / (1024 ** 2)  # In MB
+        final_memory = current_process.memory_info().rss / (1024 ** 2)
+        memory_usage_mb = final_memory - initial_memory
         final_cpu = psutil.cpu_percent(interval=None)
 
         response_data = {
             "confidence_scores": confidence_scores,
             "predictions": [1 if score >= CONFIDENCE_THRESHOLD else 0 for score in confidence_scores],
-            "time_taken": time.time() - computation_start_time,
             "critical_alerts": len(critical_cases),
             "cloud_offloaded": 0,
-            "memory_usage_mb": final_memory - initial_memory,  # Memory used during processing
+            "memory_usage_mb": memory_usage_mb,  # Memory used during processing
             "cpu_utilization_percent": final_cpu - initial_cpu,  # CPU used during processing
             "decryption_time_seconds": decryption_time,
             "inference_time_seconds": inference_time
