@@ -30,11 +30,6 @@ scaler = joblib.load('scaler.pkl')
 key = b'sU51iummF3ERq9MeIXa9C14ma1guxWFH12IyPTmZXTs='  
 cipher = Fernet(key)
 
-# Middleware to set start_time
-@app.before_request
-def start_timer():
-    request.start_time = time.time()
-
 # Email notification function
 def send_email_notification(patient_id, doctor_email):
     subject = "Critical Alert: Heart Failure Detected"
@@ -55,6 +50,7 @@ def send_email_notification(patient_id, doctor_email):
 
 @app.route('/predict', methods=['POST'])
 def predict():
+    computation_start_time = time.time()
     try:
         # Measure initial memory and CPU usage
         initial_memory = psutil.virtual_memory().used / (1024 ** 2)  # In MB
@@ -123,7 +119,7 @@ def predict():
         response_data = {
             "confidence_scores": confidence_scores,
             "predictions": [1 if score >= CONFIDENCE_THRESHOLD else 0 for score in confidence_scores],
-            "time_taken": time.time() - request.start_time,
+            "time_taken": time.time() - computation_start_time,
             "critical_alerts": len(critical_cases),
             "cloud_offloaded": 0,
             "memory_usage_mb": final_memory - initial_memory,  # Memory used during processing
