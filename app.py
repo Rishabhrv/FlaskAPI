@@ -24,6 +24,7 @@ CLOUD_API_URL = 'https://flaskapi-itlt.onrender.com/predict'
 # Load the quantized Random Forest ONNX model
 quantized_model_path = 'quantized_random_forest.onnx'
 onnx_session = InferenceSession(quantized_model_path)
+scaler = joblib.load('scaler.pkl')
 
 # Load the encryption key (generate this once and keep it secure)
 key = b'sU51iummF3ERq9MeIXa9C14ma1guxWFH12IyPTmZXTs='  
@@ -80,8 +81,6 @@ def predict():
         decryption_time = decryption_end_time -decryption_start_time
 
         X = data.drop('target', axis=1)
-
-        scaler = joblib.load('scaler.pkl')
         X_scaled = scaler.transform(X)
 
         input_data = X_scaled.astype(np.float32)
@@ -139,5 +138,6 @@ def predict():
 
 if __name__ == '__main__':
     app.run(ssl_context=('cert.pem', 'key.pem'), debug=False)
+
 
 

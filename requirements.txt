@@ -7,4 +7,5 @@ pandas==2.2.3
 Requests==2.32.3
 scikit_learn==1.4.2
 urllib3==2.3.0
+psutil==6.1.1
 gunicorn
